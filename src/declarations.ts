@@ -155,6 +155,7 @@ export interface ICluster {
   authProviderAzure?: IClusterAuthProviderAzure;
   authProviderDigitalOcean?: IClusterAuthProviderDigitalOcean;
   authProviderGoogle?: IClusterAuthProviderGoogle;
+  authProviderRancher?: IClusterAuthProviderRancher;
   authProviderOIDC?: IClusterAuthProviderOIDC;
   namespace: string;
 }
@@ -189,6 +190,14 @@ export interface IClusterAuthProviderGoogle {
   refreshToken: string;
   tokenType: string;
   clusterID?: string;
+}
+
+export interface IClusterAuthProviderRancher {
+  rancherUrl: string;
+  username: string;
+  password: string;
+  bearerToken: string;
+  expires: number;
 }
 
 export interface IClusterAuthProviderOIDC {
@@ -250,6 +259,13 @@ export interface IGoogleTokensAPIResponse {
   refresh_token: string;
   // eslint-disable-next-line @typescript-eslint/naming-convention
   token_type: string;
+}
+
+export interface IRancherLoginRequest {
+  username: string,
+  password: string,
+  description: string,
+  responseType: string
 }
 
 export interface IGoogleProject {
@@ -464,7 +480,7 @@ export interface ITerminalResponse {
 export type TActivator = 'block-button' | 'button' | 'item' | 'item-option';
 
 // DEPRECATED: The value '' can be removed when the migration is done.
-export type TAuthProvider = '' | 'aws' | 'awssso' | 'azure' | 'digitalocean' | 'google' | 'kubeconfig' | 'oidc';
+export type TAuthProvider = '' | 'aws' | 'awssso' | 'azure' | 'digitalocean' | 'google' | 'rancher' | 'kubeconfig' | 'oidc';
 
 export type TSyncType = 'context' | 'namespace';
 

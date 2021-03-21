@@ -11,6 +11,7 @@ import {
   IClusterAuthProviderAWS,
   IClusterAuthProviderAzure,
   IClusterAuthProviderGoogle,
+  IClusterAuthProviderRancher,
   IClusterAuthProviderOIDC,
   IClusters,
   IDigitalOceanCluster,
@@ -23,6 +24,7 @@ import {
   IPortForwardingResponse,
   ITerminalResponse,
   TSyncType,
+  IRancherLoginRequest,
 } from '../declarations';
 import { GOOGLE_REDIRECT_URI, INCLUSTER_URL, OIDC_REDIRECT_URL_WEB } from './constants';
 import { isJSON } from './helpers';
@@ -480,6 +482,46 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
 
     if (json.error && json.error_description) {
       throw new Error(`${json.error}: ${json.error_description}`);
+    } else {
+      throw new Error('An unknown error occurred.');
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getRancherTokens = async (
+  rancherUrl: string,
+  username: string,
+  password: string,
+  bearerToken: string,
+): Promise<IClusterAuthProviderRancher> => {
+  try {
+    const data: IRancherLoginRequest = {
+      username: username,
+      password: password,
+      description: 'kubenav login',
+      responseType: 'cookie',
+    };
+
+    alert(JSON.stringify(data));
+
+    const response = await fetch(`${rancherUrl}/v3-public/localProviders/local?action=login`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      mode: 'cors',
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      alert('success');
+      // json.access_token,
+      return {
+        rancherUrl: rancherUrl,
+        username: username,
+        password: password,
+        bearerToken: bearerToken,
+        expires: 0,
+      };
     } else {
       throw new Error('An unknown error occurred.');
     }
