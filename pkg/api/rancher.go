@@ -27,6 +27,12 @@ type ApiTokenRequest struct {
 	Description string `json:"description"`
 }
 
+type GenerateKubeconfig struct {
+	BaseType string `json:"baseType"`
+	Config   string `json:"config"`
+	Type     string `json:"type"`
+}
+
 type TokenResponse struct {
 	Token string `json:"token"`
 }
@@ -67,15 +73,10 @@ func getAuthToken(url string, username string, password string) (token string, e
 
 	json.Unmarshal(resp2.Body(), &res3)
 
-	return res3.Token, err
-}
-
-func getKubeConfig(url string, token string) (kubeconfig string, err error) {
-	resp, err := resty.R().
-		SetHeader("Authorization", "Bearer "+token).
-		Post(url + "/v3/clusters/c-lk2zk?action=generateKubeconfig")
-
-	if err != nil {
+	resp4, err4 := resty.R().
+		SetHeader("Cookie", cookie).
+		Post(url + "/v3/tokens?action=logout")
+	if err4 != nil {
 		// Explore trace info
 		fmt.Println("Request Trace Info:")
 		ti := resp.Request.RawRequest
@@ -85,7 +86,28 @@ func getKubeConfig(url string, token string) (kubeconfig string, err error) {
 		return "", err
 	}
 
-	return string(resp.Body()), err
+	resp4.Body()
+
+	return res3.Token, err
+}
+
+func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, err error) {
+	resp, err := resty.R().
+		SetHeader("Authorization", "Bearer "+token).
+		SetResult(&GenerateKubeconfig{}).
+		Post(url + "/v3/clusters/c-lk2zk?action=generateKubeconfig")
+
+	if err != nil {
+		// Explore trace info
+		fmt.Println("Request Trace Info:")
+		ti := resp.Request.RawRequest
+
+		fmt.Println("  TLSHandshake  :", ti)
+
+		return nil, err
+	}
+
+	return resp.Result().(*GenerateKubeconfig), err
 }
 
 func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request) {
