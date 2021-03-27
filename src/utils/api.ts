@@ -505,20 +505,13 @@ export const getRancherTokens = async (
       responseType: 'cookie',
     };
 
-    alert(JSON.stringify(data));
-
     const response = await fetch(`${INCLUSTER_URL}/api/rancher/kubeconfig`, {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (response.status >= 200 && response.status < 300) {
       const json = await response.json();
-
-      alert(json);
 
       // json.access_token,
       return {

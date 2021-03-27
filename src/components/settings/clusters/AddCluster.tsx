@@ -33,6 +33,8 @@ const AddCluster: React.FunctionComponent<IAddCluster> = ({ activator }: IAddClu
           </IonToolbar>
         </IonHeader>
         <IonContent>
+          {/* Rancher for debugging at top */}
+          <Rancher close={() => setShowModal(false)} />
           <Google close={() => setShowModal(false)} />
           <AWS close={() => setShowModal(false)} />
           <Azure close={() => setShowModal(false)} />

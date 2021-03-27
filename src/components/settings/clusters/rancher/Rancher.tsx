@@ -10,7 +10,7 @@ import {
   IonList,
   IonToast,
 } from '@ionic/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
@@ -31,6 +31,13 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [password, setPassword] = useState<string>('');
   const [bearerToken, setBearerToken] = useState<string>('');
   const [error, setError] = useState<string>('');
+
+  // For debugging
+  useEffect(() => {
+    setRancherUrl('https://rancher.heinzl.dev');
+    setUsername('admin');
+    setPassword('************');
+  });
 
   const handleRancherUrl = (event) => {
     setRancherUrl(event.target.value);

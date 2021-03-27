@@ -133,11 +133,6 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	fmt.Println(rancherRequest.RancherUrl)
-	fmt.Println(rancherRequest.Username)
-	fmt.Println(rancherRequest.Password)
-	fmt.Println(rancherRequest.BearerToken)
-
 	//var token string
 
 	//if rancherRequest.BearerToken == "" {

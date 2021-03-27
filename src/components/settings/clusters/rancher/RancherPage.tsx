@@ -55,7 +55,6 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
             credentials.bearerToken,
           );
 
-          alert(JSON.stringify(credentials));
           return undefined;
 
           /*if (credentials.clusterID && context.clusters) {
