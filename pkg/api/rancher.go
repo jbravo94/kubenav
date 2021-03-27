@@ -46,78 +46,123 @@ type TokenResponse struct {
 
 func getAuthToken(url string, username string, password string) (token string, err error) {
 
-	resp, err := resty.R().
-		SetBody(RancherCredentialsRequest{Username: username, Password: password, Description: "kubenav Session", ResponseType: "cookie", TTL: 57600000}).
-		Post(url + "/v3-public/localProviders/local?action=login")
+	cookie, err := loginToRancher(url, username, password)
+
 	if err != nil {
-		// Explore trace info
-		fmt.Println("Request Trace Info:")
-		ti := resp.Request.RawRequest
-
-		fmt.Println("  TLSHandshake  :", ti)
-
 		return "", err
 	}
 
-	cookie := resp.Header().Get("Set-Cookie")
+	apiTokenRequest := ApiTokenRequest{
+		Current:     false,
+		Enabled:     true,
+		Expired:     false,
+		IsDerived:   false,
+		TTL:         0,
+		Type:        "token",
+		Description: "kubenav",
+	}
 
-	resp2, err2 := resty.R().
+	resp, err := resty.R().
 		SetHeader("Cookie", cookie).
-		SetBody(ApiTokenRequest{Current: false, Enabled: true, Expired: false, IsDerived: false, TTL: 0, Type: "token", Description: "kubenav"}).
+		SetBody(apiTokenRequest).
 		Post(url + "/v3/token")
 
-	if err2 != nil {
-		// Explore trace info
-		fmt.Println("Request Trace Info:")
-		ti := resp.Request.RawRequest
+	if err != nil {
 
-		fmt.Println("  TLSHandshake  :", ti)
+		rawReq := resp.Request.RawRequest
+
+		fmt.Println("Error: ", err)
+		fmt.Println("Request Trace Info: ", rawReq)
 
 		return "", err
 	}
 
-	res3 := TokenResponse{}
+	logoutFromRancher(url, cookie)
 
-	json.Unmarshal(resp2.Body(), &res3)
+	if err != nil {
+		return "", err
+	}
 
-	resp4, err4 := resty.R().
+	tokenResponse := TokenResponse{}
+
+	json.Unmarshal(resp.Body(), &tokenResponse)
+
+	return tokenResponse.Token, err
+}
+
+func logoutFromRancher(url string, cookie string) (err error) {
+
+	resp, err := resty.R().
 		SetHeader("Cookie", cookie).
 		Post(url + "/v3/tokens?action=logout")
-	if err4 != nil {
-		// Explore trace info
-		fmt.Println("Request Trace Info:")
-		ti := resp.Request.RawRequest
 
-		fmt.Println("  TLSHandshake  :", ti)
+	if err != nil {
+		rawReq := resp.Request.RawRequest
+
+		fmt.Println("Error: ", err)
+		fmt.Println("Request Trace Info: ", rawReq)
+
+		return err
+	}
+	return err
+}
+
+func loginToRancher(url string, username string, password string) (cookie string, err error) {
+
+	rancherCredentials := RancherCredentialsRequest{
+		Username:     username,
+		Password:     password,
+		Description:  "kubenav Session",
+		ResponseType: "cookie",
+		TTL:          57600000,
+	}
+
+	resp, err := resty.R().
+		SetBody(rancherCredentials).
+		Post(url + "/v3-public/localProviders/local?action=login")
+
+	if err != nil {
+		rawReq := resp.Request.RawRequest
+
+		fmt.Println("Error: ", err)
+		fmt.Println("Request Trace Info: ", rawReq)
 
 		return "", err
 	}
 
-	resp4.Body()
+	cookie = resp.Header().Get("Set-Cookie")
 
-	return res3.Token, err
+	return cookie, err
 }
 
 func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, err error) {
+
 	resp, err := resty.R().
 		SetHeader("Authorization", "Bearer "+token).
-		SetResult(&GenerateKubeconfig{}).
 		Post(url + "/v3/clusters/c-lk2zk?action=generateKubeconfig")
 
 	if err != nil {
-		// Explore trace info
-		fmt.Println("Request Trace Info:")
-		ti := resp.Request.RawRequest
+		rawReq := resp.Request.RawRequest
 
-		fmt.Println("  TLSHandshake  :", ti)
+		fmt.Println("Error: ", err)
+		fmt.Println("Request Trace Info: ", rawReq)
 
 		return nil, err
 	}
 
-	return resp.Result().(*GenerateKubeconfig), err
+	generateKubeconfig := GenerateKubeconfig{}
+
+	json.Unmarshal(resp.Body(), &generateKubeconfig)
+
+	return &generateKubeconfig, err
 }
 
 func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		middleware.Write(w, r, nil)
+		return
+	}
 
 	if r.Body == nil {
 		middleware.Errorf(w, r, nil, http.StatusBadRequest, "Request body is empty")
@@ -133,22 +178,26 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	//var token string
+	var token = rancherRequest.BearerToken
 
-	//if rancherRequest.BearerToken == "" {
+	if token == "" {
 
-	token, err := getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
+		token, err = getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
 
-	if token == "" || err != nil {
+		if err != nil {
+			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			fmt.Println(err)
+			return
+		}
+	}
+
+	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, token)
+
+	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
 		fmt.Println(err)
 		return
 	}
-	//} else {
-	//	token = rancherRequest.BearerToken
-	//}
-
-	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, token)
 
 	middleware.Write(w, r, kubeconfig)
 }
