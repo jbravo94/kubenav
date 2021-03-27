@@ -262,6 +262,7 @@ export interface IGoogleTokensAPIResponse {
 }
 
 export interface IRancherLoginRequest {
+  rancherUrl: string,
   username: string,
   password: string,
   description: string,

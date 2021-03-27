@@ -498,6 +498,7 @@ export const getRancherTokens = async (
 ): Promise<IClusterAuthProviderRancher> => {
   try {
     const data: IRancherLoginRequest = {
+      rancherUrl: rancherUrl,
       username: username,
       password: password,
       description: 'kubenav login',
@@ -506,14 +507,19 @@ export const getRancherTokens = async (
 
     alert(JSON.stringify(data));
 
-    const response = await fetch(`${rancherUrl}/v3-public/localProviders/local?action=login`, {
+    const response = await fetch(`${INCLUSTER_URL}/api/rancher/kubeconfig`, {
       method: 'POST',
       body: JSON.stringify(data),
-      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (response.status >= 200 && response.status < 300) {
-      alert('success');
+      const json = await response.json();
+
+      alert(json);
+
       // json.access_token,
       return {
         rancherUrl: rancherUrl,

@@ -141,7 +141,7 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
         {isFetching ? (
           <IonProgressBar slot="fixed" type="indeterminate" color="primary" />
         ) : isError || !data ? (
-          <ErrorCard error={error} text="Could not load GKE clusters" icon="/assets/icons/kubernetes/kubernetes.png" />
+          <ErrorCard error={error} text="Could not load RKE clusters" icon="/assets/icons/kubernetes/kubernetes.png" />
         ) : (
           data.map((cluster, index) => {
             return (

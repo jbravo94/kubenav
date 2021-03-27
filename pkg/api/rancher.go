@@ -9,6 +9,13 @@ import (
 	"gopkg.in/resty.v1"
 )
 
+type RancherRequest struct {
+	RancherUrl  string `json:"rancherUrl"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	BearerToken string `json:"bearerToken"`
+}
+
 type RancherCredentialsRequest struct {
 	Username     string `json:"username"`
 	Password     string `json:"password"`
@@ -112,15 +119,41 @@ func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, er
 
 func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request) {
 
-	token, err := getAuthToken("https://rancher.heinzl.dev", "admin", "***REMOVED***")
+	if r.Body == nil {
+		middleware.Errorf(w, r, nil, http.StatusBadRequest, "Request body is empty")
+		return
+	}
+
+	var rancherRequest RancherRequest
+	err := json.NewDecoder(r.Body).Decode(&rancherRequest)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(rancherRequest.RancherUrl)
+	fmt.Println(rancherRequest.Username)
+	fmt.Println(rancherRequest.Password)
+	fmt.Println(rancherRequest.BearerToken)
+
+	//var token string
+
+	//if rancherRequest.BearerToken == "" {
+
+	token, err := getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
 
 	if token == "" || err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
 		fmt.Println(err)
 		return
 	}
+	//} else {
+	//	token = rancherRequest.BearerToken
+	//}
 
-	kubeconfig, err := getKubeConfig("https://rancher.heinzl.dev", token)
+	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, token)
 
 	middleware.Write(w, r, kubeconfig)
 }
