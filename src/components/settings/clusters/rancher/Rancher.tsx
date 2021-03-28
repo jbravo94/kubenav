@@ -9,6 +9,7 @@ import {
   IonLabel,
   IonList,
   IonToast,
+  IonToggle,
 } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -28,7 +29,9 @@ export interface IRancherProps extends RouteComponentProps {
 }
 
 const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRancherProps) => {
-  const [rancherUrl, setRancherUrl] = useState<string>('');
+  const [rancherHost, setRancherHost] = useState<string>('');
+  const [rancherPort, setRancherPort] = useState<number>(443);
+  const [secure, setSecure] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [bearerToken, setBearerToken] = useState<string>('');
@@ -36,13 +39,21 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
 
   if (IS_DEBUG_ENABLED) {
     useEffect(() => {
-      setRancherUrl(RANCHER_URL);
+      setRancherHost(RANCHER_URL);
       setBearerToken(RANCHER_BEARER_TOKEN);
     });
   }
 
-  const handleRancherUrl = (event) => {
-    setRancherUrl(event.target.value);
+  const handleSecure = (event) => {
+    setSecure(event.target.value);
+  };
+
+  const handleRancherHost = (event) => {
+    setRancherHost(event.target.value);
+  };
+
+  const handleRancherPort = (event) => {
+    setRancherPort(event.target.value);
   };
 
   const handleUsername = (event) => {
@@ -58,11 +69,13 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   };
 
   const handleSignIn = () => {
-    if (rancherUrl === '') {
-      setError('Rancher Url is required.');
+    if (rancherHost === '') {
+      setError('Rancher Host is required.');
     } else {
       saveTemporaryCredentials({
-        rancherUrl: rancherUrl,
+        rancherHost: rancherHost,
+        rancherPort: rancherPort,
+        secure: secure,
         username: username,
         password: password,
         bearerToken: bearerToken,
@@ -90,8 +103,16 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
 
         <IonList className="paragraph-margin-bottom" lines="full">
           <IonItem>
-            <IonLabel position="stacked">Rancher Url</IonLabel>
-            <IonInput type="text" required={true} value={rancherUrl} onInput={handleRancherUrl} pattern="url" />
+            <IonLabel position="stacked">Rancher Host</IonLabel>
+            <IonInput type="text" required={true} value={rancherHost} onInput={handleRancherHost} />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Rancher Port</IonLabel>
+            <IonInput type="number" required={true} value={rancherPort} onInput={handleRancherPort} />
+          </IonItem>
+          <IonItem>
+            <IonLabel position="stacked">Secure</IonLabel>
+            <IonToggle checked={secure} onInput={handleSecure} />
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Username</IonLabel>

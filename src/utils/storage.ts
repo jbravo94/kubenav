@@ -101,7 +101,9 @@ export const readClusters = (): IClusters | undefined => {
         const parsed = JSON.parse(rancherCredentials);
 
         clusters[id].authProviderRancher = {
-          rancherUrl: parsed.rancherUrl,
+          rancherHost: parsed.rancherHost,
+          rancherPort: parsed.rancherPort,
+          secure: parsed.secure,
           username: parsed.username,
           password: parsed.password,
           bearerToken: parsed.bearerToken,

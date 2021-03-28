@@ -193,11 +193,13 @@ export interface IClusterAuthProviderGoogle {
 }
 
 export interface IClusterAuthProviderRancher {
-  rancherUrl: string;
+  rancherHost: string;
+  rancherPort: number;
   username: string;
   password: string;
   bearerToken: string;
   expires: number;
+  secure: boolean;
 }
 
 export interface IRancherClusters {
@@ -278,8 +280,10 @@ export interface IRancherLoginRequest extends IMinimalRancherLoginRequest {
 }
 
 export interface IMinimalRancherLoginRequest {
-  rancherUrl: string,
+  rancherHost: string,
+  rancherPort: number,
   bearerToken: string,
+  secure: boolean
 }
 
 export interface IGoogleProject {

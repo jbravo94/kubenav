@@ -51,10 +51,16 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
 
         if (
           credentials &&
-          credentials.rancherUrl &&
+          credentials.rancherHost &&
+          credentials.rancherPort &&
           ((credentials.username && credentials.password) || credentials.bearerToken)
         ) {
-          const rancherClusters = await getRancherClusters(credentials.rancherUrl, credentials.bearerToken);
+          const rancherClusters = await getRancherClusters(
+            credentials.rancherHost,
+            credentials.rancherPort,
+            credentials.secure,
+            credentials.bearerToken,
+          );
 
           const tmpClusters: ICluster[] = [];
 
@@ -104,7 +110,13 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
       const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
 
       if (credentials) {
-        const kubeconfig = await getRancherKubeconfig(credentials.rancherUrl, credentials.bearerToken, cluster.id);
+        const kubeconfig = await getRancherKubeconfig(
+          credentials.rancherHost,
+          credentials.rancherPort,
+          credentials.secure,
+          credentials.bearerToken,
+          cluster.id,
+        );
       }
     });
 

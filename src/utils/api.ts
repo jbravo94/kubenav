@@ -492,11 +492,18 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
   }
 };
 
-export const getRancherClusters = async (rancherUrl: string, bearerToken: string): Promise<IRancherClusters> => {
+export const getRancherClusters = async (
+  rancherHost: string,
+  rancherPort: number,
+  secure: boolean,
+  bearerToken: string,
+): Promise<IRancherClusters> => {
   try {
     const data: IMinimalRancherLoginRequest = {
-      rancherUrl: rancherUrl,
+      rancherHost: rancherHost,
+      rancherPort: rancherPort,
       bearerToken: bearerToken,
+      secure: secure,
     };
 
     const response = await fetch(`${INCLUSTER_URL}/api/rancher/listclusters`, {
@@ -517,16 +524,20 @@ export const getRancherClusters = async (rancherUrl: string, bearerToken: string
 };
 
 export const getRancherKubeconfig = async (
-  rancherUrl: string,
+  rancherHost: string,
+  rancherPort: number,
+  secure: boolean,
   bearerToken: string,
   clusterId: string,
 ): Promise<IClusterAuthProviderRancher> => {
   try {
     const data: IRancherLoginRequest = {
-      rancherUrl: rancherUrl,
+      rancherHost: rancherHost,
+      rancherPort: rancherPort,
       bearerToken: bearerToken,
       description: 'kubenav login',
       responseType: 'cookie',
+      secure: secure,
     };
 
     const response = await fetch(`${INCLUSTER_URL}/api/rancher/kubeconfig`, {
@@ -539,11 +550,13 @@ export const getRancherKubeconfig = async (
 
       // json.access_token,
       return {
-        rancherUrl: rancherUrl,
+        rancherHost: rancherHost,
+        rancherPort: rancherPort,
         username: '',
         password: '',
         bearerToken: bearerToken,
         expires: 0,
+        secure: true,
       };
     } else {
       throw new Error('An unknown error occurred.');
