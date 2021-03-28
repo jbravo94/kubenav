@@ -2,7 +2,7 @@
   <img src="utils/assets/github-logo.png" width="200" />
   <br><br>
 
-  **kubenav** is the navigator for your **Kubernetes** clusters right in your pocket. kubenav is a **mobile, desktop and web** app to manage Kubernetes clusters and to get an overview of the status of your resources.
+**kubenav** is the navigator for your **Kubernetes** clusters right in your pocket. kubenav is a **mobile, desktop and web** app to manage Kubernetes clusters and to get an overview of the status of your resources.
 
   <p>
     <a href="https://apps.apple.com/us/app/kubenav/id1494512160" target="_blank"><img src="utils/assets/app-store-badge.png" height="50"></a>
@@ -48,3 +48,17 @@ kubectl port-forward --namespace kubenav svc/kubenav 14122
 ```
 
 For further information, please view our documentation at [docs.kubenav.io](https://docs.kubenav.io).
+
+// Make this function fetch kubeconfig and add it as cluster
+// Add Login Method
+// Store api token
+// Add development note somewhere export PATH=$PATH:~/go/bin
+// Deselect clusterselection on re-add cluster
+// Maybe find out why first request fails
+// Test with PW and other
+// Use PW from keyring
+// Fix local app
+// Refactor - remove not necessary code
+// Follow conventions
+// Review PR and squash
+// Create development notes e.g. fast app startup one command bindings and sync, etc.
