@@ -265,6 +265,7 @@ export interface IRancherLoginRequest {
   rancherUrl: string,
   username: string,
   password: string,
+  bearerToken: string,
   description: string,
   responseType: string
 }

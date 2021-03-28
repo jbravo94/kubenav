@@ -501,6 +501,7 @@ export const getRancherTokens = async (
       rancherUrl: rancherUrl,
       username: username,
       password: password,
+      bearerToken: bearerToken,
       description: 'kubenav login',
       responseType: 'cookie',
     };

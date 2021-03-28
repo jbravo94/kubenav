@@ -46,6 +46,13 @@ type TokenObject struct {
 	Token string `json:"token"`
 }
 
+type Clusters struct {
+	Data []struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"data"`
+}
+
 func getAuthToken(url string, username string, password string) (token *TokenObject, err error) {
 
 	cookie, err := loginToRancher(url, username, password)
@@ -67,6 +74,21 @@ func getAuthToken(url string, username string, password string) (token *TokenObj
 	}
 
 	return tokenResponse, err
+}
+
+func listClusters(url string, token *TokenObject) (clusters *Clusters, err error) {
+	resp, err := resty.R().
+		SetHeader("Authorization", "Bearer "+token.Token).
+		Get(url + "/v3/clusters")
+
+	if err != nil {
+		logHttpError(resp, err)
+		return nil, err
+	}
+
+	json.Unmarshal(resp.Body(), &clusters)
+
+	return clusters, err
 }
 
 // Flag secure
@@ -173,6 +195,44 @@ func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, er
 	json.Unmarshal(resp.Body(), &generateKubeconfig)
 
 	return &generateKubeconfig, err
+}
+
+func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		middleware.Write(w, r, nil)
+		return
+	}
+
+	if r.Body == nil {
+		middleware.Errorf(w, r, nil, http.StatusBadRequest, "Request body is empty")
+		return
+	}
+
+	var rancherRequest RancherRequest
+	err := json.NewDecoder(r.Body).Decode(&rancherRequest)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	if rancherRequest.BearerToken == "" {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Provide API token.")
+		return
+	}
+
+	var tokenObject = &TokenObject{}
+	tokenObject.Token = rancherRequest.BearerToken
+
+	clusters, err := listClusters(rancherRequest.RancherUrl, tokenObject)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	middleware.Write(w, r, clusters)
 }
 
 func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request) {
