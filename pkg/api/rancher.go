@@ -10,6 +10,8 @@ import (
 	"gopkg.in/resty.v1"
 )
 
+const restyRetry int = 3
+
 type RancherRequest struct {
 	RancherHost string `json:"rancherHost"`
 	RancherPort int    `json:"rancherPort"`
@@ -81,7 +83,7 @@ func getAuthToken(url string, username string, password string) (token *TokenObj
 }
 
 func listClusters(url string, token *TokenObject) (clusters *Clusters, err error) {
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
 		Get(url + "/v3/clusters")
 
@@ -97,7 +99,7 @@ func listClusters(url string, token *TokenObject) (clusters *Clusters, err error
 
 // This function is obsolete if token is stored
 func deleteAuthToken(url string, token *TokenObject) (err error) {
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
 		Delete(url + "/v3/token/" + token.Id)
 
@@ -120,7 +122,7 @@ func createAuthToken(url string, cookie string) (token *TokenObject, err error) 
 		Description: "kubenav",
 	}
 
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Cookie", cookie).
 		SetBody(apiTokenRequest).
 		Post(url + "/v3/token")
@@ -146,7 +148,7 @@ func logHttpError(resp *resty.Response, err error) {
 
 func logoutFromRancher(url string, cookie string) (err error) {
 
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Cookie", cookie).
 		Post(url + "/v3/tokens?action=logout")
 
@@ -167,7 +169,7 @@ func loginToRancher(url string, username string, password string) (cookie string
 		TTL:          57600000,
 	}
 
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetBody(rancherCredentials).
 		Post(url + "/v3-public/localProviders/local?action=login")
 
@@ -183,7 +185,7 @@ func loginToRancher(url string, username string, password string) (cookie string
 
 func getKubeConfig(url string, token string, clusterId string) (kubeconfig *GenerateKubeconfig, err error) {
 
-	resp, err := resty.R().
+	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token).
 		Post(url + "/v3/clusters/" + clusterId + "?action=generateKubeconfig")
 
