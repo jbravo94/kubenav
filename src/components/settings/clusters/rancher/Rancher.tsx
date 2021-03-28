@@ -18,7 +18,9 @@ import {
   GOOGLE_REDIRECT_URI,
   GOOGLE_RESPONSE_TYPE,
   GOOGLE_SCOPE,
+  IS_DEBUG_ENABLED,
 } from '../../../../utils/constants';
+import { RANCHER_BEARER_TOKEN, RANCHER_URL } from '../../../../utils/debugConstants';
 import { saveTemporaryCredentials } from '../../../../utils/storage';
 
 export interface IRancherProps extends RouteComponentProps {
@@ -32,12 +34,12 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [bearerToken, setBearerToken] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  // For debugging
-  useEffect(() => {
-    setRancherUrl('https://rancher.heinzl.dev');
-    setUsername('admin');
-    setPassword('************');
-  });
+  if (IS_DEBUG_ENABLED) {
+    useEffect(() => {
+      setRancherUrl(RANCHER_URL);
+      setBearerToken(RANCHER_BEARER_TOKEN);
+    });
+  }
 
   const handleRancherUrl = (event) => {
     setRancherUrl(event.target.value);
