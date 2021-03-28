@@ -26,6 +26,7 @@ import {
   TSyncType,
   IRancherLoginRequest,
   IMinimalRancherLoginRequest,
+  IRancherClusters,
 } from '../declarations';
 import { GOOGLE_REDIRECT_URI, INCLUSTER_URL, OIDC_REDIRECT_URL_WEB } from './constants';
 import { isJSON } from './helpers';
@@ -491,10 +492,7 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
   }
 };
 
-export const getRancherClusters = async (
-  rancherUrl: string,
-  bearerToken: string,
-): Promise<IClusterAuthProviderRancher> => {
+export const getRancherClusters = async (rancherUrl: string, bearerToken: string): Promise<IRancherClusters> => {
   try {
     const data: IMinimalRancherLoginRequest = {
       rancherUrl: rancherUrl,
@@ -520,15 +518,12 @@ export const getRancherClusters = async (
 
 export const getRancherKubeconfig = async (
   rancherUrl: string,
-  username: string,
-  password: string,
   bearerToken: string,
+  clusterId: string,
 ): Promise<IClusterAuthProviderRancher> => {
   try {
     const data: IRancherLoginRequest = {
       rancherUrl: rancherUrl,
-      username: username,
-      password: password,
       bearerToken: bearerToken,
       description: 'kubenav login',
       responseType: 'cookie',

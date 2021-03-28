@@ -200,6 +200,15 @@ export interface IClusterAuthProviderRancher {
   expires: number;
 }
 
+export interface IRancherClusters {
+  data: IRancherCluster[];
+}
+
+export interface IRancherCluster {
+  id: string;
+  name: string;
+}
+
 export interface IClusterAuthProviderOIDC {
   clientID: string;
   clientSecret: string;
@@ -262,10 +271,10 @@ export interface IGoogleTokensAPIResponse {
 }
 
 export interface IRancherLoginRequest extends IMinimalRancherLoginRequest {
-  username: string,
-  password: string,
-  description: string,
-  responseType: string
+  username?: string,
+  password?: string,
+  description?: string,
+  responseType?: string
 }
 
 export interface IMinimalRancherLoginRequest {

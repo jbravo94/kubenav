@@ -91,8 +91,6 @@ func listClusters(url string, token *TokenObject) (clusters *Clusters, err error
 	return clusters, err
 }
 
-// Flag secure
-
 // This function is obsolete if token is stored
 func deleteAuthToken(url string, token *TokenObject) (err error) {
 	resp, err := resty.R().

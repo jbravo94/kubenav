@@ -54,53 +54,28 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
           credentials.rancherUrl &&
           ((credentials.username && credentials.password) || credentials.bearerToken)
         ) {
-          const json = await getRancherClusters(credentials.rancherUrl, credentials.bearerToken);
+          const rancherClusters = await getRancherClusters(credentials.rancherUrl, credentials.bearerToken);
 
-          alert(JSON.stringify(json));
+          const tmpClusters: ICluster[] = [];
 
-          return undefined;
+          rancherClusters.data.map((cluster) => {
+            tmpClusters.push({
+              id: cluster.id,
+              name: cluster.name,
+              url: '',
+              certificateAuthorityData: '',
+              clientCertificateData: '',
+              clientKeyData: '',
+              token: '',
+              username: '',
+              password: '',
+              insecureSkipTLSVerify: false,
+              authProvider: 'rancher',
+              namespace: 'default',
+            });
+          });
 
-          /*if (credentials.clusterID && context.clusters) {
-              const cluster = context.clusters[credentials.clusterID];
-              credentials = await getGoogleTokens(credentials.clientID, params.code);
-              cluster.authProviderGoogle = credentials;
-              context.editCluster(cluster);
-              history.push('/settings/clusters');
-            } else {
-              credentials = await getGoogleTokens(credentials.clientID, params.code);
-              const projects = await getGoogleProjects(credentials.accessToken);
-
-              for (const project of projects) {
-                const projectClusters = await getGoogleClusters(credentials.accessToken, project.projectId);
-
-                const tmpClusters: ICluster[] = [];
-
-                if (projectClusters) {
-                  // eslint-disable-next-line
-                projectClusters.map((cluster) => {
-                    tmpClusters.push({
-                      id: `gke_${project.projectId}_${cluster.location}_${cluster.name}`,
-                      name: `gke_${project.projectId}_${cluster.location}_${cluster.name}`,
-                      url: `https://${cluster.endpoint}`,
-                      certificateAuthorityData: cluster.masterAuth.clusterCaCertificate,
-                      clientCertificateData: cluster.masterAuth.clientCertificate
-                        ? cluster.masterAuth.clientCertificate
-                        : '',
-                      clientKeyData: cluster.masterAuth.clientKey ? cluster.masterAuth.clientKey : '',
-                      token: '',
-                      username: cluster.masterAuth.username ? cluster.masterAuth.username : '',
-                      password: cluster.masterAuth.password ? cluster.masterAuth.password : '',
-                      insecureSkipTLSVerify: false,
-                      authProvider: 'google',
-                      authProviderGoogle: credentials,
-                      namespace: 'default',
-                    });
-                  });
-
-                  return tmpClusters;
-                }
-              }
-            }*/
+          return tmpClusters;
         }
       } catch (err) {
         throw err;
@@ -120,6 +95,20 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
   };
 
   const addClusters = () => {
+
+    // Add secure flag in frontend
+    // Make this function fetch kubeconfig and add it as cluster
+    // Add Login Method
+    // Store api token
+
+    selectedClusters.forEach(async (cluster) => {
+        const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
+        
+        if (credentials) {
+          const kubeconfig = await getRancherKubeconfig(credentials.rancherUrl, credentials.bearerToken, cluster.id);
+        }
+    })
+
     context.addCluster(selectedClusters);
     history.push('/settings/clusters');
   };
