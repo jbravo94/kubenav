@@ -540,8 +540,8 @@ export const getRancherKubeconfig = async (
       // json.access_token,
       return {
         rancherUrl: rancherUrl,
-        username: username,
-        password: password,
+        username: '',
+        password: '',
         bearerToken: bearerToken,
         expires: 0,
       };

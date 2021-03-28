@@ -95,19 +95,18 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
   };
 
   const addClusters = () => {
-
     // Add secure flag in frontend
     // Make this function fetch kubeconfig and add it as cluster
     // Add Login Method
     // Store api token
 
     selectedClusters.forEach(async (cluster) => {
-        const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
-        
-        if (credentials) {
-          const kubeconfig = await getRancherKubeconfig(credentials.rancherUrl, credentials.bearerToken, cluster.id);
-        }
-    })
+      const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
+
+      if (credentials) {
+        const kubeconfig = await getRancherKubeconfig(credentials.rancherUrl, credentials.bearerToken, cluster.id);
+      }
+    });
 
     context.addCluster(selectedClusters);
     history.push('/settings/clusters');
