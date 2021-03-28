@@ -17,6 +17,7 @@ type RancherRequest struct {
 	Username    string `json:"username"`
 	Password    string `json:"password"`
 	BearerToken string `json:"bearerToken"`
+	ClusterId   string `json:"clusterId"`
 }
 
 type RancherCredentialsRequest struct {
@@ -180,11 +181,11 @@ func loginToRancher(url string, username string, password string) (cookie string
 	return cookie, err
 }
 
-func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, err error) {
+func getKubeConfig(url string, token string, clusterId string) (kubeconfig *GenerateKubeconfig, err error) {
 
 	resp, err := resty.R().
 		SetHeader("Authorization", "Bearer "+token).
-		Post(url + "/v3/clusters/c-lk2zk?action=generateKubeconfig")
+		Post(url + "/v3/clusters/" + clusterId + "?action=generateKubeconfig")
 
 	if err != nil {
 		logHttpError(resp, err)
@@ -282,7 +283,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 
 	}
 
-	kubeconfig, err := getKubeConfig(generateRancherUrl(rancherRequest), tokenObject.Token)
+	kubeconfig, err := getKubeConfig(generateRancherUrl(rancherRequest), tokenObject.Token, rancherRequest.ClusterId)
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")

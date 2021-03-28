@@ -27,6 +27,8 @@ import {
   IRancherLoginRequest,
   IMinimalRancherLoginRequest,
   IRancherClusters,
+  IRancherGeneratedKubeconfig,
+  IRancherKubeconfigRequest,
 } from '../declarations';
 import { GOOGLE_REDIRECT_URI, INCLUSTER_URL, OIDC_REDIRECT_URL_WEB } from './constants';
 import { isJSON } from './helpers';
@@ -529,15 +531,14 @@ export const getRancherKubeconfig = async (
   secure: boolean,
   bearerToken: string,
   clusterId: string,
-): Promise<IClusterAuthProviderRancher> => {
+): Promise<IRancherGeneratedKubeconfig> => {
   try {
-    const data: IRancherLoginRequest = {
+    const data: IRancherKubeconfigRequest = {
       rancherHost: rancherHost,
       rancherPort: rancherPort,
       bearerToken: bearerToken,
-      description: 'kubenav login',
-      responseType: 'cookie',
       secure: secure,
+      clusterId: clusterId,
     };
 
     const response = await fetch(`${INCLUSTER_URL}/api/rancher/kubeconfig`, {
@@ -546,18 +547,9 @@ export const getRancherKubeconfig = async (
     });
 
     if (response.status >= 200 && response.status < 300) {
-      const json = await response.json();
+      const rancherGeneratedKubeconfig: IRancherGeneratedKubeconfig = await response.json();
 
-      // json.access_token,
-      return {
-        rancherHost: rancherHost,
-        rancherPort: rancherPort,
-        username: '',
-        password: '',
-        bearerToken: bearerToken,
-        expires: 0,
-        secure: true,
-      };
+      return rancherGeneratedKubeconfig;
     } else {
       throw new Error('An unknown error occurred.');
     }

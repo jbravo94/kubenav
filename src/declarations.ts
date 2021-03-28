@@ -279,11 +279,21 @@ export interface IRancherLoginRequest extends IMinimalRancherLoginRequest {
   responseType?: string
 }
 
+export interface IRancherKubeconfigRequest extends IMinimalRancherLoginRequest {
+  clusterId: string;
+}
+
 export interface IMinimalRancherLoginRequest {
   rancherHost: string,
   rancherPort: number,
   bearerToken: string,
   secure: boolean
+}
+
+export interface IRancherGeneratedKubeconfig {
+  baseType: string;
+  config: string;
+	type: string;
 }
 
 export interface IGoogleProject {

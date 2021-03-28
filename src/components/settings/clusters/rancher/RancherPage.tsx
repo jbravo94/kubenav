@@ -1,4 +1,5 @@
 import {
+  IonAlert,
   IonButton,
   IonButtons,
   IonCheckbox,
@@ -12,11 +13,23 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/react';
+import yaml from 'js-yaml';
 import React, { memo, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import { RouteComponentProps } from 'react-router';
 
-import { ICluster, IContext, IClusterAuthProviderGoogle, IClusterAuthProviderRancher } from '../../../../declarations';
+import {
+  ICluster,
+  IContext,
+  IClusterAuthProviderGoogle,
+  IClusterAuthProviderRancher,
+  IKubeconfig,
+  IKubeconfigClusterRef,
+  IKubeconfigCluster,
+  IKubeconfigUserRef,
+  IKubeconfigUser,
+  IRancherGeneratedKubeconfig,
+} from '../../../../declarations';
 import {
   getGoogleClusters,
   getGoogleProjects,
@@ -100,8 +113,118 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
     }
   };
 
+  const getKubeconfigCluster = (name: string, clusters: IKubeconfigClusterRef[]): IKubeconfigCluster | null => {
+    for (const cluster of clusters) {
+      if (cluster.name === name) {
+        return cluster.cluster;
+      }
+    }
+
+    return null;
+  };
+
+  const getKubeconfigUser = (name: string, users: IKubeconfigUserRef[]): IKubeconfigUser | null => {
+    for (const user of users) {
+      if (user.name === name) {
+        return user.user;
+      }
+    }
+
+    return null;
+  };
+
+  const addClusterViaKubeconfig = (kubeconfig: string) => {
+    if (kubeconfig === '') {
+      throw 'Kubeconfig is required';
+    } else {
+      try {
+        const clusters: ICluster[] = [];
+        const config: IKubeconfig = yaml.load(kubeconfig) as IKubeconfig;
+
+        for (const ctx of config.contexts) {
+          const cluster = getKubeconfigCluster(ctx.context.cluster, config.clusters);
+          const user = getKubeconfigUser(ctx.context.user, config.users);
+
+          if (ctx.name === '' || cluster === null || user === null || !cluster.server) {
+            throw new Error('Invalid kubeconfig');
+          }
+
+          if (
+            !user['client-certificate-data'] &&
+            !user['client-key-data'] &&
+            !user.token &&
+            !user.username &&
+            !user.password &&
+            !user['auth-provider']
+          ) {
+            throw new Error('Invalid kubeconfig');
+          }
+
+          if (user['auth-provider'] && user['auth-provider'].name !== 'oidc') {
+            throw new Error('Invalid kubeconfig');
+          } else if (user['auth-provider'] && user['auth-provider'].name === 'oidc') {
+            clusters.push({
+              id: '',
+              name: ctx.name,
+              url: cluster.server,
+              certificateAuthorityData: cluster['certificate-authority-data']
+                ? cluster['certificate-authority-data']
+                : '',
+              clientCertificateData: '',
+              clientKeyData: '',
+              token: '',
+              username: '',
+              password: '',
+              insecureSkipTLSVerify: cluster['insecure-skip-tls-verify'] ? cluster['insecure-skip-tls-verify'] : false,
+              authProvider: 'kubeconfig',
+              authProviderOIDC: {
+                clientID: user['auth-provider'].config['client-id'] ? user['auth-provider'].config['client-id'] : '',
+                clientSecret: user['auth-provider'].config['client-secret']
+                  ? user['auth-provider'].config['client-secret']
+                  : '',
+                idToken: user['auth-provider'].config['id-token'] ? user['auth-provider'].config['id-token'] : '',
+                idpIssuerURL: user['auth-provider'].config['idp-issuer-url']
+                  ? user['auth-provider'].config['idp-issuer-url']
+                  : '',
+                refreshToken: user['auth-provider'].config['refresh-token']
+                  ? user['auth-provider'].config['refresh-token']
+                  : '',
+                certificateAuthority: user['auth-provider'].config['idp-certificate-authority-data']
+                  ? user['auth-provider'].config['idp-certificate-authority-data']
+                  : '',
+                accessToken: '',
+                expiry: Math.floor(Date.now() / 1000),
+              },
+              namespace: 'default',
+            });
+          } else {
+            clusters.push({
+              id: '',
+              name: ctx.name,
+              url: cluster.server,
+              certificateAuthorityData: cluster['certificate-authority-data']
+                ? cluster['certificate-authority-data']
+                : '',
+              clientCertificateData: user['client-certificate-data'] ? user['client-certificate-data'] : '',
+              clientKeyData: user['client-key-data'] ? user['client-key-data'] : '',
+              token: user.token ? user.token : '',
+              username: user.username ? user.username : '',
+              password: user.password ? user.password : '',
+              insecureSkipTLSVerify: cluster['insecure-skip-tls-verify'] ? cluster['insecure-skip-tls-verify'] : false,
+              authProvider: 'kubeconfig',
+              namespace: 'default',
+            });
+          }
+        }
+
+        context.addCluster(clusters);
+      } catch (err) {
+        throw err;
+      }
+    }
+  };
+
   const addClusters = () => {
-    // Add secure flag in frontend
     // Make this function fetch kubeconfig and add it as cluster
     // Add Login Method
     // Store api token
@@ -110,17 +233,18 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
       const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
 
       if (credentials) {
-        const kubeconfig = await getRancherKubeconfig(
+        const kubeconfig: IRancherGeneratedKubeconfig = await getRancherKubeconfig(
           credentials.rancherHost,
           credentials.rancherPort,
           credentials.secure,
           credentials.bearerToken,
           cluster.id,
         );
+
+        addClusterViaKubeconfig(kubeconfig.config);
       }
     });
 
-    context.addCluster(selectedClusters);
     history.push('/settings/clusters');
   };
 
