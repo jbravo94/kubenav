@@ -32,6 +32,7 @@ type ApiTokenRequest struct {
 	TTL         int    `json:"ttl"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
+	Id          string `json:"id"`
 }
 
 type GenerateKubeconfig struct {
@@ -40,17 +41,50 @@ type GenerateKubeconfig struct {
 	Type     string `json:"type"`
 }
 
-type TokenResponse struct {
+type TokenObject struct {
+	Id    string `json:"id"`
 	Token string `json:"token"`
 }
 
-func getAuthToken(url string, username string, password string) (token string, err error) {
+func getAuthToken(url string, username string, password string) (token *TokenObject, err error) {
 
 	cookie, err := loginToRancher(url, username, password)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+
+	tokenResponse, err := createAuthToken(url, cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	logoutFromRancher(url, cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenResponse, err
+}
+
+// Flag secure
+
+// This function is obsolete if token is stored
+func deleteAuthToken(url string, token *TokenObject) (err error) {
+	resp, err := resty.R().
+		SetHeader("Authorization", "Bearer "+token.Token).
+		Delete(url + "/v3/token/" + token.Id)
+
+	if err != nil {
+		logHttpError(resp, err)
+		return err
+	}
+	return err
+}
+
+func createAuthToken(url string, cookie string) (token *TokenObject, err error) {
 
 	apiTokenRequest := ApiTokenRequest{
 		Current:     false,
@@ -68,26 +102,22 @@ func getAuthToken(url string, username string, password string) (token string, e
 		Post(url + "/v3/token")
 
 	if err != nil {
-
-		rawReq := resp.Request.RawRequest
-
-		fmt.Println("Error: ", err)
-		fmt.Println("Request Trace Info: ", rawReq)
-
-		return "", err
+		logHttpError(resp, err)
+		return nil, err
 	}
 
-	logoutFromRancher(url, cookie)
-
-	if err != nil {
-		return "", err
-	}
-
-	tokenResponse := TokenResponse{}
+	tokenResponse := TokenObject{}
 
 	json.Unmarshal(resp.Body(), &tokenResponse)
 
-	return tokenResponse.Token, err
+	return &tokenResponse, err
+}
+
+func logHttpError(resp *resty.Response, err error) {
+	rawReq := resp.Request.RawRequest
+
+	fmt.Println("Error: ", err)
+	fmt.Println("Request Trace Info: ", rawReq)
 }
 
 func logoutFromRancher(url string, cookie string) (err error) {
@@ -97,11 +127,7 @@ func logoutFromRancher(url string, cookie string) (err error) {
 		Post(url + "/v3/tokens?action=logout")
 
 	if err != nil {
-		rawReq := resp.Request.RawRequest
-
-		fmt.Println("Error: ", err)
-		fmt.Println("Request Trace Info: ", rawReq)
-
+		logHttpError(resp, err)
 		return err
 	}
 	return err
@@ -122,11 +148,7 @@ func loginToRancher(url string, username string, password string) (cookie string
 		Post(url + "/v3-public/localProviders/local?action=login")
 
 	if err != nil {
-		rawReq := resp.Request.RawRequest
-
-		fmt.Println("Error: ", err)
-		fmt.Println("Request Trace Info: ", rawReq)
-
+		logHttpError(resp, err)
 		return "", err
 	}
 
@@ -142,11 +164,7 @@ func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, er
 		Post(url + "/v3/clusters/c-lk2zk?action=generateKubeconfig")
 
 	if err != nil {
-		rawReq := resp.Request.RawRequest
-
-		fmt.Println("Error: ", err)
-		fmt.Println("Request Trace Info: ", rawReq)
-
+		logHttpError(resp, err)
 		return nil, err
 	}
 
@@ -174,29 +192,37 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
-		fmt.Println(err)
 		return
 	}
 
-	var token = rancherRequest.BearerToken
+	var tokenObject = &TokenObject{}
 
-	if token == "" {
-
-		token, err = getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
+	if rancherRequest.BearerToken != "" {
+		tokenObject.Token = rancherRequest.BearerToken
+	} else {
+		tokenObject, err = getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
-			fmt.Println(err)
 			return
 		}
+
 	}
 
-	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, token)
+	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, tokenObject.Token)
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
-		fmt.Println(err)
 		return
+	}
+
+	if rancherRequest.BearerToken == "" {
+		err := deleteAuthToken(rancherRequest.RancherUrl, tokenObject)
+
+		if err != nil {
+			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			return
+		}
 	}
 
 	middleware.Write(w, r, kubeconfig)
