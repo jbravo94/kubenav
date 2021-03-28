@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/kubenav/kubenav/pkg/api/middleware"
 	"gopkg.in/resty.v1"
 )
 
 type RancherRequest struct {
-	RancherUrl  string `json:"rancherUrl"`
+	RancherHost string `json:"rancherHost"`
+	RancherPort int    `json:"rancherPort"`
+	Secure      bool   `json:"secure"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
 	BearerToken string `json:"bearerToken"`
@@ -195,6 +198,18 @@ func getKubeConfig(url string, token string) (kubeconfig *GenerateKubeconfig, er
 	return &generateKubeconfig, err
 }
 
+func generateRancherUrl(rancherRequest RancherRequest) (rancherUrl string) {
+	var scheme string
+
+	if rancherRequest.Secure {
+		scheme = "https"
+	} else {
+		scheme = "http"
+	}
+
+	return scheme + "://" + rancherRequest.RancherHost + ":" + strconv.Itoa(rancherRequest.RancherPort)
+}
+
 func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -223,7 +238,7 @@ func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Reque
 	var tokenObject = &TokenObject{}
 	tokenObject.Token = rancherRequest.BearerToken
 
-	clusters, err := listClusters(rancherRequest.RancherUrl, tokenObject)
+	clusters, err := listClusters(generateRancherUrl(rancherRequest), tokenObject)
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -258,7 +273,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	if rancherRequest.BearerToken != "" {
 		tokenObject.Token = rancherRequest.BearerToken
 	} else {
-		tokenObject, err = getAuthToken(rancherRequest.RancherUrl, rancherRequest.Username, rancherRequest.Password)
+		tokenObject, err = getAuthToken(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -267,7 +282,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 
 	}
 
-	kubeconfig, err := getKubeConfig(rancherRequest.RancherUrl, tokenObject.Token)
+	kubeconfig, err := getKubeConfig(generateRancherUrl(rancherRequest), tokenObject.Token)
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -275,7 +290,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if rancherRequest.BearerToken == "" {
-		err := deleteAuthToken(rancherRequest.RancherUrl, tokenObject)
+		err := deleteAuthToken(generateRancherUrl(rancherRequest), tokenObject)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
