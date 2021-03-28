@@ -25,6 +25,7 @@ import {
   ITerminalResponse,
   TSyncType,
   IRancherLoginRequest,
+  IMinimalRancherLoginRequest,
 } from '../declarations';
 import { GOOGLE_REDIRECT_URI, INCLUSTER_URL, OIDC_REDIRECT_URL_WEB } from './constants';
 import { isJSON } from './helpers';
@@ -490,7 +491,34 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
   }
 };
 
-export const getRancherTokens = async (
+export const getRancherClusters = async (
+  rancherUrl: string,
+  bearerToken: string,
+): Promise<IClusterAuthProviderRancher> => {
+  try {
+    const data: IMinimalRancherLoginRequest = {
+      rancherUrl: rancherUrl,
+      bearerToken: bearerToken,
+    };
+
+    const response = await fetch(`${INCLUSTER_URL}/api/rancher/listclusters`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      const json = await response.json();
+
+      return json;
+    } else {
+      throw new Error('An unknown error occurred.');
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getRancherKubeconfig = async (
   rancherUrl: string,
   username: string,
   password: string,

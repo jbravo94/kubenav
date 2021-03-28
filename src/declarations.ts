@@ -261,13 +261,16 @@ export interface IGoogleTokensAPIResponse {
   token_type: string;
 }
 
-export interface IRancherLoginRequest {
-  rancherUrl: string,
+export interface IRancherLoginRequest extends IMinimalRancherLoginRequest {
   username: string,
   password: string,
-  bearerToken: string,
   description: string,
   responseType: string
+}
+
+export interface IMinimalRancherLoginRequest {
+  rancherUrl: string,
+  bearerToken: string,
 }
 
 export interface IGoogleProject {

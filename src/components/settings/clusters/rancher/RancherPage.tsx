@@ -17,7 +17,13 @@ import { useQuery } from 'react-query';
 import { RouteComponentProps } from 'react-router';
 
 import { ICluster, IContext, IClusterAuthProviderGoogle, IClusterAuthProviderRancher } from '../../../../declarations';
-import { getGoogleClusters, getGoogleProjects, getGoogleTokens, getRancherTokens } from '../../../../utils/api';
+import {
+  getGoogleClusters,
+  getGoogleProjects,
+  getGoogleTokens,
+  getRancherClusters,
+  getRancherKubeconfig,
+} from '../../../../utils/api';
 import { AppContext } from '../../../../utils/context';
 import { readTemporaryCredentials } from '../../../../utils/storage';
 import ErrorCard from '../../../misc/ErrorCard';
@@ -41,19 +47,16 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
     `RancherPage`,
     async () => {
       try {
-        let credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
+        const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
 
         if (
           credentials &&
           credentials.rancherUrl &&
           ((credentials.username && credentials.password) || credentials.bearerToken)
         ) {
-          credentials = await getRancherTokens(
-            credentials.rancherUrl,
-            credentials.username,
-            credentials.password,
-            credentials.bearerToken,
-          );
+          const json = await getRancherClusters(credentials.rancherUrl, credentials.bearerToken);
+
+          alert(JSON.stringify(json));
 
           return undefined;
 
