@@ -45,7 +45,14 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   }
 
   const handleSecure = (event) => {
-    setSecure(event.target.value);
+    const isSecure = event.target.checked;
+    setSecure(isSecure);
+
+    if (isSecure && rancherPort == 80) {
+      setRancherPort(443);
+    } else if (!isSecure && rancherPort == 443) {
+      setRancherPort(80);
+    }
   };
 
   const handleRancherHost = (event) => {
@@ -112,7 +119,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Secure</IonLabel>
-            <IonToggle checked={secure} onInput={handleSecure} />
+            <IonToggle checked={secure} onIonChange={handleSecure} />
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Username</IonLabel>
