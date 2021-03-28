@@ -228,6 +228,7 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
     // Make this function fetch kubeconfig and add it as cluster
     // Add Login Method
     // Store api token
+    // Add development note somewhere export PATH=$PATH:~/go/bin
 
     selectedClusters.forEach(async (cluster) => {
       const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
