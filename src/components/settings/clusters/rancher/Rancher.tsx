@@ -13,16 +13,11 @@ import {
 } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { IClusterAuthProviderRancher } from '../../../../declarations';
 
-import {
-  GOOGLE_OAUTH2_ENDPOINT,
-  GOOGLE_REDIRECT_URI,
-  GOOGLE_RESPONSE_TYPE,
-  GOOGLE_SCOPE,
-  IS_DEBUG_MOBILE_ENABLED,
-} from '../../../../utils/constants';
+import { IS_DEBUG_MOBILE_ENABLED } from '../../../../utils/constants';
 import { RANCHER_BEARER_TOKEN, RANCHER_URL } from '../../../../utils/debugConstants';
-import { saveTemporaryCredentials } from '../../../../utils/storage';
+import { readTemporaryCredentials, saveTemporaryCredentials } from '../../../../utils/storage';
 
 export interface IRancherProps extends RouteComponentProps {
   close: () => void;
@@ -38,11 +33,34 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [error, setError] = useState<string>('');
 
   if (IS_DEBUG_MOBILE_ENABLED) {
-    useEffect(() => {
-      setRancherHost(RANCHER_URL);
-      setBearerToken(RANCHER_BEARER_TOKEN);
-    });
+    setRancherHost(RANCHER_URL);
+    setBearerToken(RANCHER_BEARER_TOKEN);
   }
+
+  useEffect(() => {
+    const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
+
+    if (credentials) {
+      if (credentials.rancherHost) {
+        setRancherHost(credentials.rancherHost);
+      }
+      if (credentials.rancherPort) {
+        setRancherPort(credentials.rancherPort);
+      }
+      if (credentials.secure) {
+        setSecure(credentials.secure);
+      }
+      if (credentials.username) {
+        setUsername(credentials.username);
+      }
+      if (credentials.password) {
+        setPassword(credentials.password);
+      }
+      if (credentials.bearerToken) {
+        setBearerToken(credentials.bearerToken);
+      }
+    }
+  }, []);
 
   const handleSecure = (event) => {
     const isSecure = event.target.checked;

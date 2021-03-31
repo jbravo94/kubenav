@@ -1,5 +1,4 @@
 import {
-  IonAlert,
   IonButton,
   IonButtons,
   IonCheckbox,
@@ -21,7 +20,6 @@ import { RouteComponentProps } from 'react-router';
 import {
   ICluster,
   IContext,
-  IClusterAuthProviderGoogle,
   IClusterAuthProviderRancher,
   IKubeconfig,
   IKubeconfigClusterRef,
@@ -31,13 +29,7 @@ import {
   IRancherGeneratedKubeconfig,
   IClusters,
 } from '../../../../declarations';
-import {
-  getGoogleClusters,
-  getGoogleProjects,
-  getGoogleTokens,
-  getRancherClusters,
-  getRancherKubeconfig,
-} from '../../../../utils/api';
+import { getRancherClusters, getRancherKubeconfig } from '../../../../utils/api';
 import { AppContext } from '../../../../utils/context';
 import { readTemporaryCredentials } from '../../../../utils/storage';
 import ErrorCard from '../../../misc/ErrorCard';
