@@ -19,7 +19,7 @@ import {
   GOOGLE_REDIRECT_URI,
   GOOGLE_RESPONSE_TYPE,
   GOOGLE_SCOPE,
-  IS_DEBUG_ENABLED,
+  IS_DEBUG_MOBILE_ENABLED,
 } from '../../../../utils/constants';
 import { RANCHER_BEARER_TOKEN, RANCHER_URL } from '../../../../utils/debugConstants';
 import { saveTemporaryCredentials } from '../../../../utils/storage';
@@ -37,7 +37,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [bearerToken, setBearerToken] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  if (IS_DEBUG_ENABLED) {
+  if (IS_DEBUG_MOBILE_ENABLED) {
     useEffect(() => {
       setRancherHost(RANCHER_URL);
       setBearerToken(RANCHER_BEARER_TOKEN);
