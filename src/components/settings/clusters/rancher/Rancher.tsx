@@ -15,8 +15,6 @@ import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { IClusterAuthProviderRancher } from '../../../../declarations';
 
-import { IS_DEBUG_MOBILE_ENABLED } from '../../../../utils/constants';
-import { RANCHER_BEARER_TOKEN, RANCHER_URL } from '../../../../utils/debugConstants';
 import { readTemporaryCredentials, saveTemporaryCredentials } from '../../../../utils/storage';
 
 export interface IRancherProps extends RouteComponentProps {
@@ -31,11 +29,6 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [password, setPassword] = useState<string>('');
   const [bearerToken, setBearerToken] = useState<string>('');
   const [error, setError] = useState<string>('');
-
-  if (IS_DEBUG_MOBILE_ENABLED) {
-    setRancherHost(RANCHER_URL);
-    setBearerToken(RANCHER_BEARER_TOKEN);
-  }
 
   useEffect(() => {
     const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
