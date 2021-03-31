@@ -49,7 +49,6 @@ kubectl port-forward --namespace kubenav svc/kubenav 14122
 
 For further information, please view our documentation at [docs.kubenav.io](https://docs.kubenav.io).
 
-// Make this function fetch kubeconfig and add it as cluster
 // Add Login Method
 // Store api token
 // Add development note somewhere export PATH=$PATH:~/go/bin

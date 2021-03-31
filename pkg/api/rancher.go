@@ -233,13 +233,18 @@ func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if rancherRequest.BearerToken == "" {
-		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Provide API token.")
-		return
-	}
-
 	var tokenObject = &TokenObject{}
-	tokenObject.Token = rancherRequest.BearerToken
+
+	if rancherRequest.BearerToken != "" {
+		tokenObject.Token = rancherRequest.BearerToken
+	} else {
+		tokenObject, err = getAuthToken(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+
+		if err != nil {
+			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			return
+		}
+	}
 
 	clusters, err := listClusters(generateRancherUrl(rancherRequest), tokenObject)
 

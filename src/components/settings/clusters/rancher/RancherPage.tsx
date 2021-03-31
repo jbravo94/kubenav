@@ -226,6 +226,11 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
 
   const addClusters = () => {
     selectedClusters.forEach(async (cluster) => {
+      if (Object.keys(context.clusters as Record<string, unknown>).includes(cluster.name)) {
+        // Do not add existing cluster
+        return;
+      }
+
       const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
 
       if (credentials) {
