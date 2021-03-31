@@ -52,7 +52,6 @@ For further information, please view our documentation at [docs.kubenav.io](http
 // Add Login Method
 // Store api token
 // Add development note somewhere export PATH=$PATH:~/go/bin
-// Deselect clusterselection on re-add cluster
 // Maybe find out why first request fails
 // Test with PW and other
 // Use PW from keyring

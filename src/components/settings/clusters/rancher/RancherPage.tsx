@@ -29,6 +29,7 @@ import {
   IKubeconfigUserRef,
   IKubeconfigUser,
   IRancherGeneratedKubeconfig,
+  IClusters,
 } from '../../../../declarations';
 import {
   getGoogleClusters,
@@ -224,9 +225,13 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ location, his
     }
   };
 
+  const getExistingClusterNames = () => {
+    return context.clusters ? Object.values(context.clusters as IClusters).map((cluster) => cluster.name) : [];
+  };
+
   const addClusters = () => {
     selectedClusters.forEach(async (cluster) => {
-      if (Object.keys(context.clusters as Record<string, unknown>).includes(cluster.name)) {
+      if (getExistingClusterNames().includes(cluster.name)) {
         // Do not add existing cluster
         return;
       }
