@@ -11,6 +11,7 @@ import (
 )
 
 const restyRetry int = 3
+const tokenDescription string = "io.kubenav.kubenav"
 
 type RancherRequest struct {
 	RancherHost string `json:"rancherHost"`
@@ -59,6 +60,14 @@ type Clusters struct {
 	} `json:"data"`
 }
 
+type Tokens struct {
+	Data []struct {
+		Id          string `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	} `json:"data"`
+}
+
 func listClusters(url string, token *TokenObject) (clusters *Clusters, err error) {
 	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
@@ -74,16 +83,31 @@ func listClusters(url string, token *TokenObject) (clusters *Clusters, err error
 	return clusters, err
 }
 
-func deleteAuthToken(url string, token *TokenObject) (err error) {
+func deleteAuthToken(url string, token *TokenObject, tokenId string) (err error) {
 	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
-		Delete(url + "/v3/token/" + token.Id)
+		Delete(url + "/v3/token/" + tokenId)
 
 	if err != nil {
 		logHttpError(resp, err)
 		return err
 	}
 	return err
+}
+
+func listKubeNavTokens(url string, token *TokenObject) (tokens *Tokens, err error) {
+	resp, err := resty.SetRetryCount(restyRetry).R().
+		SetHeader("Authorization", "Bearer "+token.Token).
+		Get(url + "/v3/tokens")
+
+	if err != nil {
+		logHttpError(resp, err)
+		return nil, err
+	}
+
+	json.Unmarshal(resp.Body(), &tokens)
+
+	return tokens, err
 }
 
 func createAuthToken(url string, sessionToken *TokenObject) (token *TokenObject, err error) {
@@ -95,11 +119,11 @@ func createAuthToken(url string, sessionToken *TokenObject) (token *TokenObject,
 		IsDerived:   false,
 		TTL:         0,
 		Type:        "token",
-		Description: "kubenav",
+		Description: tokenDescription,
 	}
 
 	resp, err := resty.SetRetryCount(restyRetry).R().
-		SetHeader("Authorization", "Bearer "+token.Token).
+		SetHeader("Authorization", "Bearer "+sessionToken.Token).
 		SetBody(apiTokenRequest).
 		Post(url + "/v3/token")
 
@@ -218,7 +242,24 @@ func (c *Client) rancherGenerateApiTokenHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// deleteAuthToken(generateRancherUrl(rancherRequest), sessionTokenObject)
+	tokens, err := listKubeNavTokens(generateRancherUrl(rancherRequest), sessionTokenObject)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	for _, token := range tokens.Data {
+
+		if token.Description == tokenDescription {
+			err := deleteAuthToken(generateRancherUrl(rancherRequest), sessionTokenObject, token.Id)
+
+			if err != nil {
+				middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+				return
+			}
+		}
+	}
 
 	apiTokenObject, err := createAuthToken(generateRancherUrl(rancherRequest), sessionTokenObject)
 
