@@ -53,9 +53,9 @@ For further information, please view our documentation at [docs.kubenav.io](http
 // Store api token
 // Add development note somewhere export PATH=$PATH:~/go/bin
 // Maybe find out why first request fails
-// Test with PW and other
 // Use PW from keyring
-// Fix local app
+
+// Test with PW and other
 // Refactor - remove not necessary code
 // Follow conventions
 // Review PR and squash

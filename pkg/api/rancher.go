@@ -59,29 +59,6 @@ type Clusters struct {
 	} `json:"data"`
 }
 
-func getAuthToken(url string, username string, password string) (token *TokenObject, err error) {
-
-	cookie, err := loginToRancher(url, username, password)
-
-	if err != nil {
-		return nil, err
-	}
-
-	tokenResponse, err := createAuthToken(url, cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	logoutFromRancher(url, cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tokenResponse, err
-}
-
 func listClusters(url string, token *TokenObject) (clusters *Clusters, err error) {
 	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
@@ -97,7 +74,6 @@ func listClusters(url string, token *TokenObject) (clusters *Clusters, err error
 	return clusters, err
 }
 
-// This function is obsolete if token is stored
 func deleteAuthToken(url string, token *TokenObject) (err error) {
 	resp, err := resty.SetRetryCount(restyRetry).R().
 		SetHeader("Authorization", "Bearer "+token.Token).
@@ -110,7 +86,7 @@ func deleteAuthToken(url string, token *TokenObject) (err error) {
 	return err
 }
 
-func createAuthToken(url string, cookie string) (token *TokenObject, err error) {
+func createAuthToken(url string, sessionToken *TokenObject) (token *TokenObject, err error) {
 
 	apiTokenRequest := ApiTokenRequest{
 		Current:     false,
@@ -123,7 +99,7 @@ func createAuthToken(url string, cookie string) (token *TokenObject, err error) 
 	}
 
 	resp, err := resty.SetRetryCount(restyRetry).R().
-		SetHeader("Cookie", cookie).
+		SetHeader("Authorization", "Bearer "+token.Token).
 		SetBody(apiTokenRequest).
 		Post(url + "/v3/token")
 
@@ -146,10 +122,36 @@ func logHttpError(resp *resty.Response, err error) {
 	fmt.Println("Request Trace Info: ", rawReq)
 }
 
-func logoutFromRancher(url string, cookie string) (err error) {
+func loginToRancher(url string, username string, password string) (sessionToken *TokenObject, err error) {
+
+	rancherCredentials := RancherCredentialsRequest{
+		Username:    username,
+		Password:    password,
+		Description: "kubenav Session",
+		TTL:         57600000,
+	}
 
 	resp, err := resty.SetRetryCount(restyRetry).R().
-		SetHeader("Cookie", cookie).
+		SetBody(rancherCredentials).
+		Post(url + "/v3-public/localProviders/local?action=login")
+
+	if err != nil {
+		logHttpError(resp, err)
+		return nil, err
+	}
+
+	tokenResponse := TokenObject{}
+
+	json.Unmarshal(resp.Body(), &tokenResponse)
+
+	return &tokenResponse, err
+}
+
+// Use this function to remove sessionToken
+func logoutFromRancher(url string, sessionToken *TokenObject) (err error) {
+
+	resp, err := resty.SetRetryCount(restyRetry).R().
+		SetHeader("Authorization", "Bearer "+sessionToken.Token).
 		Post(url + "/v3/tokens?action=logout")
 
 	if err != nil {
@@ -159,34 +161,10 @@ func logoutFromRancher(url string, cookie string) (err error) {
 	return err
 }
 
-func loginToRancher(url string, username string, password string) (cookie string, err error) {
-
-	rancherCredentials := RancherCredentialsRequest{
-		Username:     username,
-		Password:     password,
-		Description:  "kubenav Session",
-		ResponseType: "cookie",
-		TTL:          57600000,
-	}
+func getKubeConfig(url string, token *TokenObject, clusterId string) (kubeconfig *GenerateKubeconfig, err error) {
 
 	resp, err := resty.SetRetryCount(restyRetry).R().
-		SetBody(rancherCredentials).
-		Post(url + "/v3-public/localProviders/local?action=login")
-
-	if err != nil {
-		logHttpError(resp, err)
-		return "", err
-	}
-
-	cookie = resp.Header().Get("Set-Cookie")
-
-	return cookie, err
-}
-
-func getKubeConfig(url string, token string, clusterId string) (kubeconfig *GenerateKubeconfig, err error) {
-
-	resp, err := resty.SetRetryCount(restyRetry).R().
-		SetHeader("Authorization", "Bearer "+token).
+		SetHeader("Authorization", "Bearer "+token.Token).
 		Post(url + "/v3/clusters/" + clusterId + "?action=generateKubeconfig")
 
 	if err != nil {
@@ -211,6 +189,45 @@ func generateRancherUrl(rancherRequest RancherRequest) (rancherUrl string) {
 	}
 
 	return scheme + "://" + rancherRequest.RancherHost + ":" + strconv.Itoa(rancherRequest.RancherPort)
+}
+
+func (c *Client) rancherGenerateApiTokenHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		middleware.Write(w, r, nil)
+		return
+	}
+
+	if r.Body == nil {
+		middleware.Errorf(w, r, nil, http.StatusBadRequest, "Request body is empty")
+		return
+	}
+
+	var rancherRequest RancherRequest
+	err := json.NewDecoder(r.Body).Decode(&rancherRequest)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	sessionTokenObject, err := loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	// deleteAuthToken(generateRancherUrl(rancherRequest), sessionTokenObject)
+
+	apiTokenObject, err := createAuthToken(generateRancherUrl(rancherRequest), sessionTokenObject)
+
+	if err != nil {
+		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		return
+	}
+
+	middleware.Write(w, r, apiTokenObject)
 }
 
 func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Request) {
@@ -238,7 +255,7 @@ func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Reque
 	if rancherRequest.BearerToken != "" {
 		tokenObject.Token = rancherRequest.BearerToken
 	} else {
-		tokenObject, err = getAuthToken(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+		tokenObject, err = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -251,6 +268,15 @@ func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
 		return
+	}
+
+	if rancherRequest.BearerToken == "" {
+		err := logoutFromRancher(generateRancherUrl(rancherRequest), tokenObject)
+
+		if err != nil {
+			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			return
+		}
 	}
 
 	middleware.Write(w, r, clusters)
@@ -281,7 +307,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	if rancherRequest.BearerToken != "" {
 		tokenObject.Token = rancherRequest.BearerToken
 	} else {
-		tokenObject, err = getAuthToken(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+		tokenObject, err = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -290,7 +316,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 
 	}
 
-	kubeconfig, err := getKubeConfig(generateRancherUrl(rancherRequest), tokenObject.Token, rancherRequest.ClusterId)
+	kubeconfig, err := getKubeConfig(generateRancherUrl(rancherRequest), tokenObject, rancherRequest.ClusterId)
 
 	if err != nil {
 		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
@@ -298,7 +324,7 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if rancherRequest.BearerToken == "" {
-		err := deleteAuthToken(generateRancherUrl(rancherRequest), tokenObject)
+		err := logoutFromRancher(generateRancherUrl(rancherRequest), tokenObject)
 
 		if err != nil {
 			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
