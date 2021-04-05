@@ -31,6 +31,32 @@ build-mobile-server-for-debugging:
 		-X ${REPO}/pkg/version.BuildDate=${BUILDTIME}" \
 		-o ./bin/debug-mobile ./cmd/debug-mobile
 
+prepare-build-ios-for-debugging:
+	ionic build
+	make bindings-ios
+	npx cap sync
+
+build-ios-for-debugging: prepare-build-ios-for-debugging
+	npx cap open ios
+	$(info ************ Build app now in IDE and launch simulator ************)
+
+build-ios-for-live-debugging: prepare-build-ios-for-debugging
+	$(info ************ Build app now in IDE and launch simulator ************)
+	ionic capacitor run ios -l --address=0.0.0.0
+
+prepare-build-android-for-debugging:
+	ionic build
+	make bindings-android
+	npx cap sync
+
+build-android-for-debugging: prepare-build-android-for-debugging
+	npx cap open android
+	$(info ************ Build app now in IDE and launch simulator ************)
+
+build-android-for-live-debugging: prepare-build-android-for-debugging
+	$(info ************ Build app now in IDE and launch simulator ************)
+	ionic capacitor run android -l --address=0.0.0.0
+
 build-electron:
 	rm -rf cmd/electron/bind_darwin_amd64.go
 	rm -rf cmd/electron/bind_darwin_arm64.go
