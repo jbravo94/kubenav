@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -146,7 +147,7 @@ func logHttpError(resp *resty.Response, err error) {
 	fmt.Println("Request Trace Info: ", rawReq)
 }
 
-func loginToRancher(url string, username string, password string) (sessionToken *TokenObject, err error) {
+func loginToRancher(url string, username string, password string) (sessionToken *TokenObject, err error, statusCode int) {
 
 	rancherCredentials := RancherCredentialsRequest{
 		Username:    username,
@@ -155,20 +156,30 @@ func loginToRancher(url string, username string, password string) (sessionToken 
 		TTL:         57600000,
 	}
 
-	resp, err := resty.SetRetryCount(restyRetry).R().
+	resp, err := resty.SetRetryCount(restyRetry).OnAfterResponse(func(c *resty.Client, resp *resty.Response) error {
+
+		if resp.StatusCode() == 401 {
+			return errors.New("Unauthorized")
+		} else if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+			return nil
+		} else {
+			return errors.New("Not was not successful: " + resp.Status())
+		}
+
+	}).R().
 		SetBody(rancherCredentials).
 		Post(url + "/v3-public/localProviders/local?action=login")
 
 	if err != nil {
 		logHttpError(resp, err)
-		return nil, err
+		return nil, err, resp.StatusCode()
 	}
 
 	tokenResponse := TokenObject{}
 
 	json.Unmarshal(resp.Body(), &tokenResponse)
 
-	return &tokenResponse, err
+	return &tokenResponse, err, resp.StatusCode()
 }
 
 // Use this function to remove sessionToken
@@ -235,10 +246,10 @@ func (c *Client) rancherGenerateApiTokenHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	sessionTokenObject, err := loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+	sessionTokenObject, err, statusCode := loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 	if err != nil {
-		middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+		middleware.Errorf(w, r, nil, statusCode, err.Error())
 		return
 	}
 
@@ -292,14 +303,15 @@ func (c *Client) rancherListClustersHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	var tokenObject = &TokenObject{}
+	statusCode := -1
 
 	if rancherRequest.BearerToken != "" {
 		tokenObject.Token = rancherRequest.BearerToken
 	} else {
-		tokenObject, err = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+		tokenObject, err, statusCode = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
-			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			middleware.Errorf(w, r, nil, statusCode, "Error occured.")
 			return
 		}
 	}
@@ -344,14 +356,15 @@ func (c *Client) rancherKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	var tokenObject = &TokenObject{}
+	statusCode := -1
 
 	if rancherRequest.BearerToken != "" {
 		tokenObject.Token = rancherRequest.BearerToken
 	} else {
-		tokenObject, err = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
+		tokenObject, err, statusCode = loginToRancher(generateRancherUrl(rancherRequest), rancherRequest.Username, rancherRequest.Password)
 
 		if err != nil {
-			middleware.Errorf(w, r, nil, http.StatusInternalServerError, "Error occured.")
+			middleware.Errorf(w, r, nil, statusCode, "Error occured.")
 			return
 		}
 

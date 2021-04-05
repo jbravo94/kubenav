@@ -15,7 +15,8 @@ import {
 } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { IClusterAuthProviderRancher } from '../../../../declarations';
+import { IClusterAuthProviderRancher, IRancherTokenResponse } from '../../../../declarations';
+import { getRancherToken } from '../../../../utils/api';
 
 import { readTemporaryCredentials, saveTemporaryCredentials } from '../../../../utils/storage';
 
@@ -132,7 +133,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
             <IonInput type="number" required={true} value={rancherPort} onInput={handleRancherPort} />
           </IonItem>
           <IonItem>
-            <IonLabel position="stacked">Secure</IonLabel>
+            <IonLabel>Secure</IonLabel>
             <IonToggle checked={secure} onIonChange={handleSecure} />
           </IonItem>
           <IonItem>
@@ -146,7 +147,16 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
           <IonItem>
             <IonLabel position="stacked">Bearer Token (optional)</IonLabel>
             <IonInput type="text" required={false} value={bearerToken} onInput={handleBearerToken} />
-            <IonIcon slot="end" name="sync-circle" color="blue" size="large" onClick={() => setShowActionSheet(true)} />
+            <IonButton
+              expand="full"
+              slot="end"
+              fill="clear"
+              shape="round"
+              size="large"
+              onClick={() => setShowActionSheet(true)}
+            >
+              <IonIcon size="large" src="/assets/icons/misc/sync-circle.svg" />
+            </IonButton>
           </IonItem>
         </IonList>
         <IonButton expand="block" onClick={() => handleSignIn()}>
@@ -161,18 +171,28 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
         cssClass="my-custom-class"
         buttons={[
           {
-            text: 'Generate',
-            role: 'destructive',
-            handler: () => {
-              console.log('Delete clicked');
+            text: 'Generate API Token',
+            role: 'generate',
+            handler: async () => {
+              try {
+                const tokenResponse: IRancherTokenResponse = await getRancherToken(
+                  username,
+                  password,
+                  rancherHost,
+                  rancherPort,
+                  secure,
+                );
+                setBearerToken(tokenResponse.token);
+                setUsername('');
+                setPassword('');
+              } catch (err) {
+                setError(err);
+              }
             },
           },
           {
             text: 'Cancel',
             role: 'cancel',
-            handler: () => {
-              console.log('Cancel clicked');
-            },
           },
         ]}
       ></IonActionSheet>

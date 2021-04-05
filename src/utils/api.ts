@@ -29,6 +29,7 @@ import {
   IRancherClusters,
   IRancherGeneratedKubeconfig,
   IRancherKubeconfigRequest,
+  IRancherTokenResponse,
 } from '../declarations';
 import { GOOGLE_REDIRECT_URI, INCLUSTER_URL, OIDC_REDIRECT_URL_WEB } from './constants';
 import { isJSON } from './helpers';
@@ -486,6 +487,39 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
 
     if (json.error && json.error_description) {
       throw new Error(`${json.error}: ${json.error_description}`);
+    } else {
+      throw new Error('An unknown error occurred.');
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getRancherToken = async (
+  username: string,
+  password: string,
+  rancherHost: string,
+  rancherPort: number,
+  secure: boolean,
+): Promise<IRancherTokenResponse> => {
+  try {
+    const data: IRancherLoginRequest = {
+      username: username,
+      password: password,
+      rancherHost: rancherHost,
+      rancherPort: rancherPort,
+      secure: secure,
+    };
+
+    const response = await fetch(`${INCLUSTER_URL}/api/rancher/generateapitoken`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      const json = await response.json();
+
+      return json;
     } else {
       throw new Error('An unknown error occurred.');
     }

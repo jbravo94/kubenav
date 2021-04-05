@@ -211,6 +211,11 @@ export interface IRancherCluster {
   name: string;
 }
 
+export interface IRancherTokenResponse {
+  id: string;
+  token: string;
+}
+
 export interface IClusterAuthProviderOIDC {
   clientID: string;
   clientSecret: string;
@@ -273,8 +278,6 @@ export interface IGoogleTokensAPIResponse {
 }
 
 export interface IRancherLoginRequest extends IMinimalRancherLoginRequest {
-  username?: string,
-  password?: string,
   description?: string,
   responseType?: string
 }
@@ -286,7 +289,9 @@ export interface IRancherKubeconfigRequest extends IMinimalRancherLoginRequest {
 export interface IMinimalRancherLoginRequest {
   rancherHost: string,
   rancherPort: number,
-  bearerToken: string,
+  username?: string,
+  password?: string,
+  bearerToken?: string,
   secure: boolean
 }
 
