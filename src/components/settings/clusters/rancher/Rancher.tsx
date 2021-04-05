@@ -177,7 +177,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
         cssClass="my-custom-class"
         buttons={[
           {
-            text: 'Generate API Token',
+            text: 'Generate and save API Token',
             role: 'generate',
             handler: async () => {
               try {
