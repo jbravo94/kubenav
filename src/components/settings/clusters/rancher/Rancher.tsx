@@ -162,7 +162,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
               shape="round"
               size="large"
               style={
-                isPlatform('hybrid') || isPlatform('mobile')
+                isPlatform('ios')
                   ? { '--padding-end': '0em' }
                   : { '--padding-start': '0.5em', '--padding-end': '0.5em' }
               }
