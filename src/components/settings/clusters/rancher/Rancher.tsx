@@ -138,11 +138,17 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Username</IonLabel>
-            <IonInput type="text" required={true} value={username} onInput={handleUsername} />
+            <IonInput autocomplete="username" type="text" required={true} value={username} onInput={handleUsername} />
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Password</IonLabel>
-            <IonInput type="password" required={true} value={password} onInput={handlePassword} />
+            <IonInput
+              autocomplete="current-password"
+              type="password"
+              required={true}
+              value={password}
+              onInput={handlePassword}
+            />
           </IonItem>
           <IonItem>
             <IonLabel position="stacked">Bearer Token (optional)</IonLabel>
@@ -182,6 +188,17 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
                   rancherPort,
                   secure,
                 );
+
+                saveTemporaryCredentials({
+                  rancherHost: rancherHost,
+                  rancherPort: rancherPort,
+                  secure: secure,
+                  username: '',
+                  password: '',
+                  bearerToken: tokenResponse.token,
+                  expires: 0,
+                });
+
                 setBearerToken(tokenResponse.token);
                 setUsername('');
                 setPassword('');
