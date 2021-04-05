@@ -56,3 +56,6 @@ For further information, please view our documentation at [docs.kubenav.io](http
 // Refactor - remove not necessary code
 // Follow conventions
 // Review PR and squash
+
+// Status code & Error handling
+// Change sync symbol to plus
