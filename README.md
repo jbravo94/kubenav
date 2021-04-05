@@ -49,14 +49,15 @@ kubectl port-forward --namespace kubenav svc/kubenav 14122
 
 For further information, please view our documentation at [docs.kubenav.io](https://docs.kubenav.io).
 
-// Add Login Method
-// Store api token
 // Add development note somewhere export PATH=$PATH:~/go/bin
 // Maybe find out why first request fails
-// Use PW from keyring
+// Maybe use username from keyring
 
 // Test with PW and other
 // Refactor - remove not necessary code
 // Follow conventions
 // Review PR and squash
 // Create development notes e.g. fast app startup one command bindings and sync, etc.
+
+// ionic build && make bindings-ios && npx cap sync && npx cap open ios
+// ionic capacitor run ios -l --address=0.0.0.0

@@ -12,6 +12,7 @@ import {
   IonList,
   IonToast,
   IonToggle,
+  isPlatform,
 } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -154,11 +155,17 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
             <IonLabel position="stacked">Bearer Token (optional)</IonLabel>
             <IonInput type="text" required={false} value={bearerToken} onInput={handleBearerToken} />
             <IonButton
+              hidden={bearerToken != ''}
               expand="full"
               slot="end"
               fill="clear"
               shape="round"
               size="large"
+              style={
+                isPlatform('hybrid') || isPlatform('mobile')
+                  ? { '--padding-end': '0em' }
+                  : { '--padding-start': '0.5em', '--padding-end': '0.5em' }
+              }
               onClick={() => setShowActionSheet(true)}
             >
               <IonIcon size="large" src="/assets/icons/misc/sync-circle.svg" />
@@ -174,13 +181,17 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
       <IonActionSheet
         isOpen={showActionSheet}
         onDidDismiss={() => setShowActionSheet(false)}
-        cssClass="my-custom-class"
         buttons={[
           {
             text: 'Generate and save API Token',
             role: 'generate',
             handler: async () => {
               try {
+                if (username == '' || password == '') {
+                  setError('Please enter Username and Password first!');
+                  return;
+                }
+
                 const tokenResponse: IRancherTokenResponse = await getRancherToken(
                   username,
                   password,
