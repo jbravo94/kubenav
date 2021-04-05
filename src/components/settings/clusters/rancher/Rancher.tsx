@@ -1,9 +1,11 @@
 import {
+  IonActionSheet,
   IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -29,6 +31,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
   const [password, setPassword] = useState<string>('');
   const [bearerToken, setBearerToken] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [showActionSheet, setShowActionSheet] = useState(false);
 
   useEffect(() => {
     const credentials = readTemporaryCredentials('rancher') as undefined | IClusterAuthProviderRancher;
@@ -143,15 +146,36 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
           <IonItem>
             <IonLabel position="stacked">Bearer Token (optional)</IonLabel>
             <IonInput type="text" required={false} value={bearerToken} onInput={handleBearerToken} />
+            <IonIcon slot="end" name="sync-circle" color="blue" size="large" onClick={() => setShowActionSheet(true)} />
           </IonItem>
         </IonList>
-
         <IonButton expand="block" onClick={() => handleSignIn()}>
           Sign In to Rancher
         </IonButton>
       </IonCardContent>
 
       <IonToast isOpen={error !== ''} onDidDismiss={() => setError('')} message={error} duration={3000} />
+      <IonActionSheet
+        isOpen={showActionSheet}
+        onDidDismiss={() => setShowActionSheet(false)}
+        cssClass="my-custom-class"
+        buttons={[
+          {
+            text: 'Generate',
+            role: 'destructive',
+            handler: () => {
+              console.log('Delete clicked');
+            },
+          },
+          {
+            text: 'Cancel',
+            role: 'cancel',
+            handler: () => {
+              console.log('Cancel clicked');
+            },
+          },
+        ]}
+      ></IonActionSheet>
     </IonCard>
   );
 };
