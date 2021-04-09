@@ -49,11 +49,8 @@ kubectl port-forward --namespace kubenav svc/kubenav 14122
 
 For further information, please view our documentation at [docs.kubenav.io](https://docs.kubenav.io).
 
-// Maybe find out why first request fails
-// Maybe use username from keyring
-
 // Test with PW and other
-// Follow conventions
 // Review PR and squash
-// Update Changelog
-// rebase
+// Rebase
+// Add screenshots / rancher docker container
+// go mod go sum
