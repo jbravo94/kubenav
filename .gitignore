@@ -50,6 +50,3 @@ yarn-error.log*
 
 Android Studio
 .idea
-
-# Other
-debugConstants.ts
