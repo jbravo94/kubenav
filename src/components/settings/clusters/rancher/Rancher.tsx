@@ -197,7 +197,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
               }
               onClick={() => setShowActionSheet(true)}
             >
-              <IonIcon size="large" src="/assets/icons/misc/sync-circle.svg" />
+              <IonIcon size="large" src="/assets/icons/misc/add-outline.svg" />
             </IonButton>
           </IonItem>
         </IonList>

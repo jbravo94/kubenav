@@ -13,7 +13,7 @@ import {
 import React, { memo, useContext } from 'react';
 
 import { IContext } from '../../declarations';
-import { IS_DEBUG_MOBILE_ENABLED } from '../../utils/constants';
+import { DEBUG_MOBILE_FRONTEND } from '../../utils/constants';
 import { AppContext } from '../../utils/context';
 import AddCluster from './clusters/AddCluster';
 import ClusterItem from './clusters/ClusterItem';
@@ -29,7 +29,7 @@ const ClustersPage: React.FunctionComponent = () => {
             <IonMenuButton />
           </IonButtons>
           <IonTitle>Clusters</IonTitle>
-          {isPlatform('hybrid') || IS_DEBUG_MOBILE_ENABLED ? <AddCluster activator="button" /> : null}
+          {isPlatform('hybrid') || DEBUG_MOBILE_FRONTEND ? <AddCluster activator="button" /> : null}
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -37,7 +37,7 @@ const ClustersPage: React.FunctionComponent = () => {
           Object.keys(context.clusters).map((key) => {
             return context.clusters ? <ClusterItem key={key} cluster={context.clusters[key]} /> : null;
           })
-        ) : isPlatform('hybrid') || IS_DEBUG_MOBILE_ENABLED ? (
+        ) : isPlatform('hybrid') || DEBUG_MOBILE_FRONTEND ? (
           <IonCard>
             <IonCardContent>
               <p className="paragraph-margin-bottom">

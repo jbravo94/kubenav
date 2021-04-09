@@ -65,6 +65,7 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ history }: IR
           const tmpClusters: ICluster[] = [];
 
           rancherClusters.data.forEach((cluster) => {
+            // Because later the cluster is generated from the fetched full kubeconfig, just a dummy object is needed to show available clusters in app
             tmpClusters.push({
               id: cluster.id,
               name: cluster.name,
@@ -77,7 +78,7 @@ const RancherPage: React.FunctionComponent<IRancherPageProps> = ({ history }: IR
               password: '',
               insecureSkipTLSVerify: false,
               authProvider: 'rancher',
-              namespace: 'default',
+              namespace: '',
             });
           });
 

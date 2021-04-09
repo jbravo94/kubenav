@@ -494,6 +494,7 @@ export const getGoogleTokens = async (clientID: string, code: string): Promise<I
   }
 };
 
+// getRancherToken creates and adds api token in rancher
 export const getRancherToken = async (
   username: string,
   password: string,
@@ -527,6 +528,7 @@ export const getRancherToken = async (
   }
 };
 
+// getRancherClusters returns a list of available clusters from rancher for provided in user
 export const getRancherClusters = async (
   rancherHost: string,
   rancherPort: number,
@@ -558,6 +560,7 @@ export const getRancherClusters = async (
   }
 };
 
+// getRancherKubeconfig returns generated kubeconfig from rancher
 export const getRancherKubeconfig = async (
   rancherHost: string,
   rancherPort: number,

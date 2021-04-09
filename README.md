@@ -53,9 +53,7 @@ For further information, please view our documentation at [docs.kubenav.io](http
 // Maybe use username from keyring
 
 // Test with PW and other
-// Refactor - remove not necessary code
 // Follow conventions
 // Review PR and squash
-
-// Status code & Error handling
-// Change sync symbol to plus
+// Update Changelog
+// rebase
