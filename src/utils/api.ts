@@ -11,7 +11,6 @@ import {
   IClusterAuthProviderAWS,
   IClusterAuthProviderAzure,
   IClusterAuthProviderGoogle,
-  IClusterAuthProviderRancher,
   IClusterAuthProviderOIDC,
   IClusters,
   IDigitalOceanCluster,

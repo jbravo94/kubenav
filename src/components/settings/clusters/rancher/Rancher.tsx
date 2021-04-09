@@ -91,22 +91,51 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
     setBearerToken(event.target.value);
   };
 
+  const storeRancherCredentials = () => {
+    saveTemporaryCredentials({
+      rancherHost: rancherHost,
+      rancherPort: rancherPort,
+      secure: secure,
+      username: username,
+      password: password,
+      bearerToken: bearerToken,
+      expires: 0,
+    });
+  };
+
   const handleSignIn = () => {
     if (rancherHost === '') {
       setError('Rancher Host is required.');
     } else {
-      saveTemporaryCredentials({
-        rancherHost: rancherHost,
-        rancherPort: rancherPort,
-        secure: secure,
-        username: username,
-        password: password,
-        bearerToken: bearerToken,
-        expires: 0,
-      });
+      storeRancherCredentials();
 
       close();
       history.push('/settings/clusters/rancher');
+    }
+  };
+
+  const handleApiTokenGeneration = async () => {
+    try {
+      if (username == '' || password == '') {
+        setError('Please enter Username and Password first!');
+        return;
+      }
+
+      const tokenResponse: IRancherTokenResponse = await getRancherToken(
+        username,
+        password,
+        rancherHost,
+        rancherPort,
+        secure,
+      );
+
+      storeRancherCredentials();
+
+      setBearerToken(tokenResponse.token);
+      setUsername('');
+      setPassword('');
+    } catch (err) {
+      setError(err);
     }
   };
 
@@ -185,38 +214,7 @@ const Rancher: React.FunctionComponent<IRancherProps> = ({ close, history }: IRa
           {
             text: 'Generate and save API Token',
             role: 'generate',
-            handler: async () => {
-              try {
-                if (username == '' || password == '') {
-                  setError('Please enter Username and Password first!');
-                  return;
-                }
-
-                const tokenResponse: IRancherTokenResponse = await getRancherToken(
-                  username,
-                  password,
-                  rancherHost,
-                  rancherPort,
-                  secure,
-                );
-
-                saveTemporaryCredentials({
-                  rancherHost: rancherHost,
-                  rancherPort: rancherPort,
-                  secure: secure,
-                  username: '',
-                  password: '',
-                  bearerToken: tokenResponse.token,
-                  expires: 0,
-                });
-
-                setBearerToken(tokenResponse.token);
-                setUsername('');
-                setPassword('');
-              } catch (err) {
-                setError(err);
-              }
-            },
+            handler: handleApiTokenGeneration,
           },
           {
             text: 'Cancel',
