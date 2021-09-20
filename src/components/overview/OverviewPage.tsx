@@ -29,6 +29,8 @@ const OverviewPage: React.FunctionComponent = () => {
   const context = useContext<IContext>(AppContext);
   const cluster = context.currentCluster();
 
+  const isRancherEmbeddedK3sCluster = cluster && cluster.url.endsWith('/k8s/clusters/local');
+
   const { isError, isFetching, data, error } = useQuery<boolean, Error>(
     ['OverviewPage', cluster],
     async () => {
@@ -45,7 +47,7 @@ const OverviewPage: React.FunctionComponent = () => {
           await context.kubernetesAuthWrapper(cluster.id),
         );
 
-        if (data && data.paths) {
+        if ((data && data.paths) || isRancherEmbeddedK3sCluster) {
           return true;
         } else {
           return false;

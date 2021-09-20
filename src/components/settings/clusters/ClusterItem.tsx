@@ -17,6 +17,8 @@ const ClusterItem: React.FunctionComponent<IClusterItemProps> = ({ cluster }: IC
 
   const itemSlidingRef = useRef<HTMLIonItemSlidingElement>(null);
 
+  const isRancherEmbeddedK3sCluster = cluster && cluster.url.endsWith('/k8s/clusters/local');
+
   const closeItemSliding = () => {
     if (itemSlidingRef && itemSlidingRef.current) {
       itemSlidingRef.current.close();
@@ -34,7 +36,8 @@ const ClusterItem: React.FunctionComponent<IClusterItemProps> = ({ cluster }: IC
           context.settings,
           await context.kubernetesAuthWrapper(cluster.id),
         );
-        if (data && data.paths) {
+
+        if ((data && data.paths) || isRancherEmbeddedK3sCluster) {
           return true;
         } else {
           return false;
@@ -55,7 +58,7 @@ const ClusterItem: React.FunctionComponent<IClusterItemProps> = ({ cluster }: IC
       <IonItem button={true} onClick={() => changeCluster(cluster.id)}>
         <IonIcon
           slot="end"
-          color={data ? 'success' : 'danger'}
+          color={data || isRancherEmbeddedK3sCluster ? 'success' : 'danger'}
           icon={context.cluster && cluster.id === context.cluster ? radioButtonOn : radioButtonOff}
         />
         <IonLabel>{cluster.name}</IonLabel>

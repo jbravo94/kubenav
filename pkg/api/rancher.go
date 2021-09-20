@@ -1,11 +1,14 @@
 package api
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"io/ioutil"
 
 	"github.com/kubenav/kubenav/pkg/api/middleware"
 	"gopkg.in/resty.v1"
@@ -92,6 +95,8 @@ type Tokens struct {
 func getDefaultRestClient() (request *resty.Request) {
 	return resty.
 		SetRetryCount(restyRetry).
+		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
+		SetRedirectPolicy(resty.FlexibleRedirectPolicy(5)).
 		OnAfterResponse(func(c *resty.Client, resp *resty.Response) error {
 
 			if resp.StatusCode() == 401 {
@@ -114,10 +119,13 @@ func getAuthenticatedRestClient(token *TokenObject) (request *resty.Request) {
 
 // Function to handle http errors
 func logHttpError(resp *resty.Response, err error) {
-	rawReq := resp.Request.RawRequest
-
 	fmt.Println("Error: ", err)
+
+	rawReq := resp.Request.RawRequest
 	fmt.Println("Request Trace Info: ", rawReq)
+
+	body, _ := ioutil.ReadAll(rawReq.Body)
+	fmt.Println("Body: ", string(body))
 }
 
 // Function to build url from parameters
